@@ -3,7 +3,4 @@
 	<gresource prefix="/kr/gooroom/NoticeApplet/theme">
 		<file compressed="true" alias="theme.css">../data/theme/gooroom-notice-applet.css</file>
 	</gresource>
-	<gresource prefix="/kr/gooroom/NoticeApplet/widget">
-		<file compressed="true" alias="notice-dialog.ui">../data/widget/gooroom-notice-dialog.ui</file>
-	</gresource>
 </gresources>

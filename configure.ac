@@ -49,6 +49,11 @@ AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE", [Gettext Package])
 AM_GLIB_GNU_GETTEXT
 
 dnl ***********************************
+dnl *** Optional debug message***
+dnl ***********************************
+AC_DEFINE_UNQUOTED([DEBUG_MSG], [], ["Output debug message"])
+
+dnl ***********************************
 dnl *** Check for required packages ***
 dnl ***********************************
 GTK_REQUIRED=3.20.0
@@ -56,14 +61,16 @@ GLIB_REQUIRED=2.44.0
 LIBPANEL_REQUIRED=3.24.1
 DBUS_REQUIRED=0.32
 DBUS_GLIB_REQUIRED=0.84
+LIBWEBKIT2GTK_REQUIRED=2.20
 
 PKG_CHECK_MODULES(GTK, gtk+-3.0 >= $GTK_REQUIRED)
 PKG_CHECK_MODULES(GLIB, glib-2.0 >= GLIB_REQUIRED)
 PKG_CHECK_MODULES(GNOME_APPLETS, libpanel-applet >= $LIBPANEL_REQUIRED)
-PKG_CHECK_MODULES(LIBNOTIFY, libnotify)
 PKG_CHECK_MODULES(DBUS, dbus-1 > DBUS_REQUIRED)
 PKG_CHECK_MODULES(DBUS_GLIB, dbus-glib-1)
-PKG_CHECK_MODULES(LIBWEBKIT2GTK, webkit2gtk-4.0)
+PKG_CHECK_MODULES(LIBNOTIFY, libnotify)
+PKG_CHECK_MODULES(LIBWEBKIT2GTK, webkit2gtk-4.0 > LIBWEBKIT2GTK_REQUIRED)
+PKG_CHECK_MODULES([JSON_C], json-c)
 
 AC_ARG_WITH([libpanel-applet-dir], [], [LIBPANEL_APPLET_DIR=$withval], [LIBPANEL_APPLET_DIR=""])
 if test "$LIBPANEL_APPLET_DIR" == ""; then
@@ -76,6 +83,11 @@ AC_SUBST(LIBPANEL_APPLET_DIR)
 
 AC_OUTPUT([
 Makefile
+icons/Makefile
+icons/22x22/Makefile
+icons/22x22/status/Makefile
+icons/scalable/Makefile
+icons/scalable/apps/Makefile
 data/Makefile
 src/Makefile
 po/Makefile.in

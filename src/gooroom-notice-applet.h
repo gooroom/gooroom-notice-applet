@@ -43,6 +43,8 @@ struct _GooroomNoticeAppletClass {
 
 GType gooroom_notice_applet_get_type (void);
 gboolean gooroom_notice_applet_job (gpointer user_data);
+void gooroom_applet_notice_get_data_from_json (gpointer user_data, const gchar *data, gboolean urgency);
+void gooroom_log_handler(const gchar *log_domain, GLogLevelFlags log_level, const gchar *message, gpointer user_data);
 
 G_END_DECLS
 

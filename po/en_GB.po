@@ -1,13 +1,13 @@
 # English(USA) translations for gooroom-notice-applet package.
-# Copyright (C) 2016 THE gooroom-notice-applet'S COPYRIGHT HOLDER
+# Copyright (C) 2019 THE gooroom-notice-applet'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the gooroom-notice-applet package.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gooroom-notice-applet 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-01-22 12:52+0900\n"
-"PO-Revision-Date: 2019-01-22 12:54+0900\n"
+"POT-Creation-Date: 2019-07-20 12:52+0900\n"
+"PO-Revision-Date: 2019-07-20 12:54+0900\n"
 "Language-Team: Korean\n"
 "Language: en_GB\n"
 "MIME-Version: 1.0\n"
@@ -20,3 +20,16 @@ msgstr "Gooroom Notice Applet"
 
 msgid "Notice applet for GNOME panel"
 msgstr "Notice applet for GNOME panel"
+
+msgid "other %d cases"
+msgid_plural "other %d cases"
+msgstr[0] "%d other cases"
+
+msgid "Notice"
+msgstr "Notice"
+
+msgid "detail view"
+msgstr "detail view"
+
+msgid "Close"
+msgstr "Close"

@@ -27,6 +27,7 @@ libgooroom_notice_applet_la_CFLAGS = \
 	$(LIBNOTIFY_CFLAGS) \
 	$(DBUS_CFLAGS) \
 	$(DBUS_GLIB_CFLAGS) \
+    $(JSON_C_CFLAGS)    \
 	$(LIBWEBKIT2GTK_CFLAGS) \
 	$(AM_CFLAGS)
 
@@ -42,6 +43,7 @@ libgooroom_notice_applet_la_LIBADD = \
 	$(DBUS_LIBS) \
 	$(DBUS_GLIB_LIBS) \
 	$(LIBWEBKIT2GTK_LIBS) \
+    $(JSON_C_LIBS)  \
 	$(GNOME_APPLETS_LIBS)
 
 resource_files = $(shell glib-compile-resources --sourcedir=$(srcdir) --generate-dependencies $(srcdir)/gresource.xml)

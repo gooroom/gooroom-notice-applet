@@ -8,4 +8,4 @@ Description=Factory for Gooroom Notice Applet
 [GooroomNoticeApplet]
 _Name=Gooroom Notice Applet
 _Description=Notice applet for GNOME panel
-Icon=anbox
+Icon=notice-applet-panel
