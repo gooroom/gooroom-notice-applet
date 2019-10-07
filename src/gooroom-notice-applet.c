@@ -114,33 +114,28 @@ gooroom_tray_icon_change (gpointer user_data)
     GooroomNoticeApplet *applet = GOOROOM_NOTICE_APPLET (user_data);
     GooroomNoticeAppletPrivate *priv = applet->priv;
 
-    if  (is_connected && is_agent)
-    {
-        gtk_container_remove (GTK_CONTAINER (priv->button), priv->tray);
+    gtk_container_remove (GTK_CONTAINER (priv->button), priv->tray);
 
-        if (priv->img_status)
-            icon = g_strdup(DEFAULT_NOTICE_TRAY_ICON);
-        else
-            icon = g_strdup(DEFAULT_TRAY_ICON);
+   if (priv->img_status)
+       icon = g_strdup(DEFAULT_NOTICE_TRAY_ICON);
+   else
+       icon = g_strdup(DEFAULT_TRAY_ICON);
 
-        GdkPixbuf *pix;
-        pix = gtk_icon_theme_load_icon (gtk_icon_theme_get_default (),
-                                        icon,
-                                        PANEL_TRAY_ICON_SIZE,
-                                        GTK_ICON_LOOKUP_FORCE_SIZE, NULL);
+    GdkPixbuf *pix;
+    pix = gtk_icon_theme_load_icon (gtk_icon_theme_get_default (),
+                                    icon,
+                                    PANEL_TRAY_ICON_SIZE,
+                                    GTK_ICON_LOOKUP_FORCE_SIZE, NULL);
 
-        if (pix) {
-            priv->tray = gtk_image_new_from_pixbuf (pix);
-            gtk_image_set_pixel_size (GTK_IMAGE (priv->tray), PANEL_TRAY_ICON_SIZE);
-            gtk_container_add (GTK_CONTAINER (priv->button), priv->tray);
-            g_object_unref (G_OBJECT (pix));
-        }
-        gtk_widget_show_all (priv->button);
+    if (pix) {
+        priv->tray = gtk_image_new_from_pixbuf (pix);
+        gtk_image_set_pixel_size (GTK_IMAGE (priv->tray), PANEL_TRAY_ICON_SIZE);
+        gtk_container_add (GTK_CONTAINER (priv->button), priv->tray);
+        g_object_unref (G_OBJECT (pix));
     }
-    else
-    {
-        gtk_widget_hide (priv->button);
-    }
+    gtk_widget_show_all (priv->button);
+
+    gtk_widget_set_sensitive (priv->button, (is_connected && is_agent));
 
     if (icon)
         g_free (icon);
@@ -882,8 +877,6 @@ gooroom_notice_applet_init (GooroomNoticeApplet *applet)
     gtk_container_add (GTK_CONTAINER (applet), priv->button);
     g_signal_connect (G_OBJECT (priv->button), "toggled", G_CALLBACK (on_notice_applet_button_toggled), applet);
 
-    gooroom_tray_icon_change ((gpointer)applet);
-
     log_handler = g_log_set_handler (NULL,
             G_LOG_LEVEL_MASK | G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION,
             gooroom_log_handler, NULL);
@@ -895,6 +888,8 @@ gooroom_notice_applet_init (GooroomNoticeApplet *applet)
 
     if (is_connected)
         g_timeout_add (500, (GSourceFunc) gooroom_applet_notice_update_delay, (gpointer)applet);
+
+    gooroom_tray_icon_change ((gpointer)applet);
 
 }
 
