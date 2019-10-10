@@ -15,21 +15,28 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
+#: ../data/kr.gooroom.NoticeApplet.panel-applet.in.in.h:1
 msgid "Gooroom Notice Applet"
 msgstr "Gooroom Notice Applet"
 
+#: ../data/kr.gooroom.NoticeApplet.panel-applet.in.in.h:2
 msgid "Notice applet for GNOME panel"
 msgstr "Notice applet for GNOME panel"
 
+#: ../src/gooroom-notice-applet.c:166
+#, c-format
 msgid "other %d cases"
 msgid_plural "other %d cases"
 msgstr[0] "%d other cases"
 
+#: ../src/gooroom-notice-applet.c:540 ../src/gooroom-notice-applet.c:697
 msgid "Notice"
 msgstr "Notice"
 
-msgid "detail view"
-msgstr "detail view"
-
+#: ../src/gooroom-notice-applet.c:577
 msgid "Close"
 msgstr "Close"
+
+#: ../src/gooroom-notice-applet.c:619
+msgid "detail view"
+msgstr "detail view"

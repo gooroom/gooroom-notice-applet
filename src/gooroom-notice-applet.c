@@ -200,7 +200,7 @@ gooroom_agent_signal_cb (GDBusProxy *proxy,
         g_variant_get (parameters, "(v)", &v);
         gchar *res = g_variant_dup_string (v, NULL);
 
-        g_debug ("gooroom_agent_signal_cb : signal name [%s], param [%s] \n",signal_name, res);
+        g_debug ("%s : signal name [%s], param [%s] \n", __func__, signal_name, res);
         gooroom_applet_notice_get_data_from_json (user_data, res, TRUE);
 
         GooroomNoticeApplet *applet = GOOROOM_NOTICE_APPLET (user_data);
@@ -358,7 +358,7 @@ gooroom_applet_notice_done_cb (GObject *source_object,
 
     if (data)
     {
-        g_debug ("gooroom_application_notice_done_cb : agent param [%s]\n", data);
+        g_debug ("%s : agent param [%s]\n", __func__, data);
 
         gooroom_applet_notice_get_data_from_json (user_data, data, FALSE);
 
