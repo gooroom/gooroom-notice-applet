@@ -51,7 +51,7 @@ AM_GLIB_GNU_GETTEXT
 dnl ***********************************
 dnl *** Optional debug message***
 dnl ***********************************
-AC_DEFINE_UNQUOTED([DEBUG_MSG], [], ["Output debug message"])
+dnl AC_DEFINE_UNQUOTED([DEBUG_MSG], [], ["Output debug message"])
 
 dnl ***********************************
 dnl *** Check for required packages ***

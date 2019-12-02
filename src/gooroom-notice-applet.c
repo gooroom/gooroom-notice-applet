@@ -52,19 +52,23 @@ struct _GooroomNoticeAppletPrivate
     GtkWidget    *tray;
     GtkWidget    *window;
     GtkWidget    *button;
-    gboolean     img_status;
-
     GQueue       *queue;
     GHashTable   *data_list;
+
     gint         total;
     gint         panel_size;
     gint         minus_size;
+    gint         disabled_cnt;
+	gulong       agent_id;
 
-    gchar    *signing;
-    gchar    *session_id;
-    gchar    *client_id;
-    gchar    *default_domain;
-    gint     disabled_cnt;
+    gchar        *signing;
+    gchar        *session_id;
+    gchar        *client_id;
+    gchar        *default_domain;
+
+    gboolean     img_status;
+    gboolean     is_agent;
+    gboolean     is_connected;
 };
 
 typedef struct
@@ -82,11 +86,8 @@ typedef struct
     gchar    *lang;
 }CookieData;
 
+static gboolean    is_job;
 static uint        log_handler = 0;
-static gboolean    is_job = FALSE;
-static gboolean    is_agent = FALSE;
-static gboolean    is_connected = FALSE;
-
 G_DEFINE_TYPE_WITH_PRIVATE (GooroomNoticeApplet, gooroom_notice_applet, PANEL_TYPE_APPLET)
 
 void
@@ -110,35 +111,16 @@ gooroom_tray_icon_change (gpointer user_data)
 {
     g_return_if_fail (user_data != NULL);
 
-    gchar* icon = NULL;
+    const gchar* icon;
     GooroomNoticeApplet *applet = GOOROOM_NOTICE_APPLET (user_data);
     GooroomNoticeAppletPrivate *priv = applet->priv;
 
-    gtk_container_remove (GTK_CONTAINER (priv->button), priv->tray);
+	icon = priv->img_status ? DEFAULT_NOTICE_TRAY_ICON : DEFAULT_TRAY_ICON;
 
-   if (priv->img_status)
-       icon = g_strdup(DEFAULT_NOTICE_TRAY_ICON);
-   else
-       icon = g_strdup(DEFAULT_TRAY_ICON);
+    gtk_image_set_from_icon_name (GTK_IMAGE(priv->tray), icon, GTK_ICON_SIZE_BUTTON);
+    gtk_image_set_pixel_size (GTK_IMAGE (priv->tray), PANEL_TRAY_ICON_SIZE);
 
-    GdkPixbuf *pix;
-    pix = gtk_icon_theme_load_icon (gtk_icon_theme_get_default (),
-                                    icon,
-                                    PANEL_TRAY_ICON_SIZE,
-                                    GTK_ICON_LOOKUP_FORCE_SIZE, NULL);
-
-    if (pix) {
-        priv->tray = gtk_image_new_from_pixbuf (pix);
-        gtk_image_set_pixel_size (GTK_IMAGE (priv->tray), PANEL_TRAY_ICON_SIZE);
-        gtk_container_add (GTK_CONTAINER (priv->button), priv->tray);
-        g_object_unref (G_OBJECT (pix));
-    }
-    gtk_widget_show_all (priv->button);
-
-    gtk_widget_set_sensitive (priv->button, (is_connected && is_agent));
-
-    if (icon)
-        g_free (icon);
+    gtk_widget_set_sensitive (priv->button, (priv->is_connected && priv->is_agent));
 }
 
 static gchar*
@@ -235,11 +217,14 @@ gooroom_agent_proxy_get (void)
 }
 
 static void
-gooroom_agent_bind_signal (gpointer data)
+gooroom_agent_bind_signal (gpointer user_data)
 {
+    GooroomNoticeApplet *applet = GOOROOM_NOTICE_APPLET (user_data);
+    GooroomNoticeAppletPrivate *priv = applet->priv;
+
     agent_proxy = gooroom_agent_proxy_get();
-    if (agent_proxy)
-        g_signal_connect (agent_proxy, "g-signal", G_CALLBACK (gooroom_agent_signal_cb), data);
+    if (agent_proxy && priv->agent_id == 0)
+        priv->agent_id = g_signal_connect (agent_proxy, "g-signal", G_CALLBACK (gooroom_agent_signal_cb), user_data);
 }
 
 void
@@ -373,7 +358,7 @@ gooroom_applet_notice_done_cb (GObject *source_object,
             if (!is_job)
                 g_timeout_add (500, (GSourceFunc) gooroom_notice_applet_job,(gpointer)user_data);
         }
-        is_agent = TRUE;
+        priv->is_agent = TRUE;
         g_free (data);
     }
 
@@ -717,15 +702,18 @@ gooroom_notice_applet_network_changed (GNetworkMonitor *monitor,
                                        gboolean network_available,
                                        gpointer user_data)
 {
-    if (is_connected == network_available)
+    GooroomNoticeApplet *applet = GOOROOM_NOTICE_APPLET (user_data);
+    GooroomNoticeAppletPrivate *priv = applet->priv;
+
+    if (priv->is_connected == network_available)
         return;
 
-    is_connected = network_available;
+    priv->is_connected = network_available;
     gooroom_tray_icon_change (user_data);
-
-    if (is_connected)
+	
+	if (priv->is_connected)
     {
-        if (agent_proxy == NULL && !is_agent)
+        if (agent_proxy == NULL && !priv->is_agent)
             g_timeout_add (500, (GSourceFunc)gooroom_applet_notice_update_delay, user_data);
     }
 }
@@ -782,24 +770,8 @@ gooroom_notice_applet_size_allocate (GtkWidget     *widget,
     ctx = gtk_widget_get_style_context (GTK_WIDGET (priv->button));
     gtk_style_context_get_padding (ctx, gtk_widget_get_state_flags (GTK_WIDGET (priv->button)), &padding);
     gtk_style_context_get_border (ctx, gtk_widget_get_state_flags (GTK_WIDGET (priv->button)), &border);
-
-    gchar* icon;
-    if (priv->img_status)
-        icon = g_strdup(DEFAULT_NOTICE_TRAY_ICON);
-    else
-        icon = g_strdup(DEFAULT_TRAY_ICON);
-
-    gint minus = padding.top+padding.bottom+border.top+border.bottom;
-    GdkPixbuf *pix = gtk_icon_theme_load_icon (gtk_icon_theme_get_default (),
-                                               icon,
-                                               PANEL_TRAY_ICON_SIZE,
-                                               GTK_ICON_LOOKUP_FORCE_SIZE, NULL);
-    if (pix)
-    {
-        gtk_image_set_from_pixbuf (GTK_IMAGE (priv->tray), pix);
-        gtk_image_set_pixel_size (GTK_IMAGE (priv->tray), size);
-        g_object_unref (G_OBJECT (pix));
-    }
+    
+	gint minus = padding.top+padding.bottom+border.top+border.bottom;
     priv->minus_size = minus;
 }
 
@@ -837,6 +809,11 @@ gooroom_notice_applet_finalize (GObject *object)
         priv->data_list = NULL;
     }
 
+	if (priv->agent_id != 0)
+	{
+	    g_signal_handler_disconnect (agent_proxy, priv->agent_id);
+	}
+
     if (agent_proxy)
         g_object_unref (agent_proxy);
 
@@ -857,7 +834,6 @@ gooroom_notice_applet_init (GooroomNoticeApplet *applet)
     panel_applet_set_flags (PANEL_APPLET (applet), PANEL_APPLET_EXPAND_MINOR);
 
     priv->window     = NULL;
-    priv->img_status = FALSE;
 
     priv->total      = 0;
     priv->queue      = g_queue_new ();
@@ -868,6 +844,12 @@ gooroom_notice_applet_init (GooroomNoticeApplet *applet)
     priv->client_id  = NULL;
     priv->default_domain = NULL;
     priv->disabled_cnt = 0;
+	priv->agent_id = 0;
+
+    is_job = FALSE;
+    priv->is_agent = FALSE;
+    priv->is_connected = FALSE;
+    priv->img_status = FALSE;
 
     /* Initialize i18n */
     bindtextdomain (GETTEXT_PACKAGE, GNOMELOCALEDIR);
@@ -877,20 +859,23 @@ gooroom_notice_applet_init (GooroomNoticeApplet *applet)
     gtk_container_add (GTK_CONTAINER (applet), priv->button);
     g_signal_connect (G_OBJECT (priv->button), "toggled", G_CALLBACK (on_notice_applet_button_toggled), applet);
 
+    priv->tray = gtk_image_new_from_icon_name (DEFAULT_TRAY_ICON, GTK_ICON_SIZE_BUTTON);
+    gtk_image_set_pixel_size (GTK_IMAGE (priv->tray), PANEL_TRAY_ICON_SIZE);
+    gtk_container_add (GTK_CONTAINER (priv->button), priv->tray);
+
+    gtk_widget_show_all (priv->button);
+
     log_handler = g_log_set_handler (NULL,
             G_LOG_LEVEL_MASK | G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION,
             gooroom_log_handler, NULL);
 
     GNetworkMonitor *monitor = g_network_monitor_get_default();
     g_signal_connect (monitor, "network-changed", G_CALLBACK (gooroom_notice_applet_network_changed), applet);
+    priv->is_connected = g_network_monitor_get_network_available (monitor);
+    gtk_widget_set_sensitive (priv->button, (priv->is_connected && priv->is_agent));
 
-    is_connected = g_network_monitor_get_network_available (monitor);
-
-    if (is_connected)
+    if (priv->is_connected)
         g_timeout_add (500, (GSourceFunc) gooroom_applet_notice_update_delay, (gpointer)applet);
-
-    gooroom_tray_icon_change ((gpointer)applet);
-
 }
 
 static void
