@@ -1,18 +1,5 @@
-gooroom-notice-applet (0.1.1+grm2u1) unstable; urgency=medium
+gooroom-notice-applet (0.2.1+grm2u1) unstable; urgency=medium
 
-  [ donghun ]
-  * [fa49cf42] Added dependency library for notify
-  * [7b14e0df] Updated gooroom-notice-applet
-  * [4dbb12fa] Fixed icon error
-  * [23c26d37] Update source regarding copyright
-  * [63744e06] Update sources regarding copyright
+  * Initial release
 
-  [ Gooroom Autobuilder ]
-
- -- Gooroom Autobuilder <jenkins@gooroom.kr>  Sun, 01 Dec 2019 19:10:18 +0900
-
-gooroom-notice-applet (0.1.0+grm1u1) unstable; urgency=medium
-
-  * Initial release.
-
- -- Gooroom Autobuilder <jenkins@gooroom.kr>  Tue, 22 Jan 2019 11:42:00 +0900
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Mon, 02 Dec 2019 20:59:16 +0900
