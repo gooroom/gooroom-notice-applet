@@ -69,6 +69,7 @@ struct _GooroomNoticeAppletPrivate
     gboolean     img_status;
     gboolean     is_agent;
     gboolean     is_connected;
+    gboolean     is_job;
 };
 
 typedef struct
@@ -86,7 +87,6 @@ typedef struct
     gchar    *lang;
 }CookieData;
 
-static gboolean    is_job;
 static uint        log_handler = 0;
 G_DEFINE_TYPE_WITH_PRIVATE (GooroomNoticeApplet, gooroom_notice_applet, PANEL_TYPE_APPLET)
 
@@ -98,7 +98,7 @@ gooroom_log_handler(const gchar *log_domain,
 {
 #ifdef DEBUG_MSG
     FILE* file = NULL;
-    file = fopen ("/var/tmp/notice.debug", "a");
+    file = fopen ("/var/tmp/notice_debug", "a+");
     if (file == NULL)
         return;
     fputs(message, file);
@@ -115,7 +115,7 @@ gooroom_tray_icon_change (gpointer user_data)
     GooroomNoticeApplet *applet = GOOROOM_NOTICE_APPLET (user_data);
     GooroomNoticeAppletPrivate *priv = applet->priv;
 
-	icon = priv->img_status ? DEFAULT_NOTICE_TRAY_ICON : DEFAULT_TRAY_ICON;
+    icon = priv->img_status ? DEFAULT_NOTICE_TRAY_ICON : DEFAULT_TRAY_ICON;
 
     gtk_image_set_from_icon_name (GTK_IMAGE(priv->tray), icon, GTK_ICON_SIZE_BUTTON);
     gtk_image_set_pixel_size (GTK_IMAGE (priv->tray), PANEL_TRAY_ICON_SIZE);
@@ -192,8 +192,14 @@ gooroom_agent_signal_cb (GDBusProxy *proxy,
         {
             priv->img_status = TRUE;
             gooroom_tray_icon_change (user_data);
-            if (!is_job)
-                g_timeout_add (500, (GSourceFunc) gooroom_notice_applet_job,(gpointer)user_data);
+
+            if (priv->is_job)
+                return;
+
+            if (0 < total)
+                g_timeout_add (500, (GSourceFunc) gooroom_notice_applet_immediately_job,(gpointer)user_data);
+			if (0 < priv->disabled_cnt)
+                g_timeout_add (500, (GSourceFunc) gooroom_notice_applet_click_to_job,(gpointer)user_data);
         }
     }
 }
@@ -344,7 +350,6 @@ gooroom_applet_notice_done_cb (GObject *source_object,
     if (data)
     {
         g_debug ("%s : agent param [%s]\n", __func__, data);
-
         gooroom_applet_notice_get_data_from_json (user_data, data, FALSE);
 
         GooroomNoticeApplet *applet = GOOROOM_NOTICE_APPLET (user_data);
@@ -355,8 +360,13 @@ gooroom_applet_notice_done_cb (GObject *source_object,
         {
             priv->img_status = TRUE;
 
-            if (!is_job)
-                g_timeout_add (500, (GSourceFunc) gooroom_notice_applet_job,(gpointer)user_data);
+            if (priv->is_job)
+                return;
+
+            if (0 < total)
+                g_timeout_add (500, (GSourceFunc) gooroom_notice_applet_immediately_job,(gpointer)user_data);
+            if (0 < priv->disabled_cnt)
+                g_timeout_add (500, (GSourceFunc) gooroom_notice_applet_click_to_job,(gpointer)user_data);
         }
         priv->is_agent = TRUE;
         g_free (data);
@@ -636,28 +646,26 @@ on_notice_applet_hash_value_destroy (gpointer user_data)
 }
 
 gboolean
-gooroom_notice_applet_job (gpointer user_data)
+gooroom_notice_applet_immediately_job (gpointer user_data)
 {
     g_return_val_if_fail (user_data != NULL, FALSE);
 
     GooroomNoticeApplet *applet = GOOROOM_NOTICE_APPLET (user_data);
     GooroomNoticeAppletPrivate *priv = applet->priv;
 
-    is_job = TRUE;
-
-    if (NOTIFICATION_LIMIT <= priv->total)
-    {
-        guint total = g_queue_get_length (priv->queue);
-        if (0 == total)
-            is_job = FALSE;
-        return is_job;
-    }
+    priv->is_job = TRUE;
 
     NoticeData *n;
     while ((n = g_queue_pop_head (priv->queue)))
     {
         if (!n)
             continue;
+
+        if (NOTIFICATION_LIMIT <= priv->total)
+        {
+            g_queue_push_tail (priv->queue, n);
+            return priv->is_job;
+        }
 
         priv->total++;
 
@@ -667,34 +675,48 @@ gooroom_notice_applet_job (gpointer user_data)
         NotifyNotification *notification =  notification_opened (user_data, title, n->icon);
         g_hash_table_insert (priv->data_list, notification, n);
         g_signal_connect (G_OBJECT (notification), "closed", G_CALLBACK (on_notification_closed), user_data);
-        return is_job;
+        return priv->is_job;
     }
 
-    guint total = g_queue_get_length (priv->queue);
+    priv->is_job = FALSE;
+    return priv->is_job;
+}
 
-    if (0 != total)
-        return is_job;
+gboolean
+gooroom_notice_applet_click_to_job (gpointer user_data)
+{
+    g_return_val_if_fail (user_data != NULL, FALSE);
 
-    if (0 != priv->disabled_cnt)
+    GooroomNoticeApplet *applet = GOOROOM_NOTICE_APPLET (user_data);
+    GooroomNoticeAppletPrivate *priv = applet->priv;
+
+    priv->is_job = TRUE;
+
+    gchar *tmp = g_strdup (_("Notice"));
+    gchar *no_title = gooroom_notice_other_text (tmp, priv->disabled_cnt);
+
+    NoticeData *n;
+    n = g_try_new0 (NoticeData, 1);
+    n->title = no_title;
+    n->url = g_strdup_printf ("%s", priv->default_domain);
+    n->icon = g_strdup (NOTIFICATION_MSG_ICON);
+
+    if (NOTIFICATION_LIMIT <= priv->total)
     {
-        priv->total++;
+        g_queue_push_tail (priv->queue, n);
+        g_timeout_add (500, (GSourceFunc) gooroom_notice_applet_immediately_job, (gpointer)user_data);
 
-        gchar *tmp = g_strdup (_("Notice"));
-        gchar *no_title = gooroom_notice_other_text (tmp, priv->disabled_cnt);
-
-        NoticeData *n;
-        n = g_try_new0 (NoticeData, 1);
-        n->title = no_title;
-        n->url = g_strdup_printf ("%s", priv->default_domain);
-        n->icon = g_strdup (NOTIFICATION_MSG_ICON);
-
-        NotifyNotification *notification = notification_opened (user_data, no_title, n->icon);
-        g_hash_table_insert (priv->data_list, notification, n);
-        g_signal_connect (G_OBJECT (notification), "closed", G_CALLBACK (on_notification_closed), user_data);
+        priv->is_job = FALSE;
+        return priv->is_job;
     }
 
-    is_job = FALSE;
-    return is_job;
+    priv->total++;
+
+    NotifyNotification *notification = notification_opened (user_data, no_title, n->icon);
+    g_hash_table_insert (priv->data_list, notification, n);
+    g_signal_connect (G_OBJECT (notification), "closed", G_CALLBACK (on_notification_closed), user_data);
+    priv->is_job = FALSE;
+    return priv->is_job;
 }
 
 static void
@@ -710,8 +732,8 @@ gooroom_notice_applet_network_changed (GNetworkMonitor *monitor,
 
     priv->is_connected = network_available;
     gooroom_tray_icon_change (user_data);
-	
-	if (priv->is_connected)
+
+    if (priv->is_connected)
     {
         if (agent_proxy == NULL && !priv->is_agent)
             g_timeout_add (500, (GSourceFunc)gooroom_applet_notice_update_delay, user_data);
@@ -770,8 +792,8 @@ gooroom_notice_applet_size_allocate (GtkWidget     *widget,
     ctx = gtk_widget_get_style_context (GTK_WIDGET (priv->button));
     gtk_style_context_get_padding (ctx, gtk_widget_get_state_flags (GTK_WIDGET (priv->button)), &padding);
     gtk_style_context_get_border (ctx, gtk_widget_get_state_flags (GTK_WIDGET (priv->button)), &border);
-    
-	gint minus = padding.top+padding.bottom+border.top+border.bottom;
+
+    gint minus = padding.top+padding.bottom+border.top+border.bottom;
     priv->minus_size = minus;
 }
 
@@ -809,10 +831,10 @@ gooroom_notice_applet_finalize (GObject *object)
         priv->data_list = NULL;
     }
 
-	if (priv->agent_id != 0)
-	{
-	    g_signal_handler_disconnect (agent_proxy, priv->agent_id);
-	}
+    if (priv->agent_id != 0)
+    {
+        g_signal_handler_disconnect (agent_proxy, priv->agent_id);
+    }
 
     if (agent_proxy)
         g_object_unref (agent_proxy);
@@ -844,9 +866,9 @@ gooroom_notice_applet_init (GooroomNoticeApplet *applet)
     priv->client_id  = NULL;
     priv->default_domain = NULL;
     priv->disabled_cnt = 0;
-	priv->agent_id = 0;
+    priv->agent_id = 0;
 
-    is_job = FALSE;
+    priv->is_job = FALSE;
     priv->is_agent = FALSE;
     priv->is_connected = FALSE;
     priv->img_status = FALSE;
