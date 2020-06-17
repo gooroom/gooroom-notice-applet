@@ -59,7 +59,9 @@ struct _GooroomNoticeAppletPrivate
     gint         panel_size;
     gint         minus_size;
     gint         disabled_cnt;
-	gulong       agent_id;
+    gint         offset_x;
+    gint         offset_y;
+    gulong       agent_id;
 
     gchar        *signing;
     gchar        *session_id;
@@ -120,7 +122,15 @@ gooroom_tray_icon_change (gpointer user_data)
     gtk_image_set_from_icon_name (GTK_IMAGE(priv->tray), icon, GTK_ICON_SIZE_BUTTON);
     gtk_image_set_pixel_size (GTK_IMAGE (priv->tray), PANEL_TRAY_ICON_SIZE);
 
-    gtk_widget_set_sensitive (priv->button, (priv->is_connected && priv->is_agent));
+    if (priv->is_connected && priv->is_agent)
+    {
+        gtk_widget_show_all (priv->button);
+        gtk_widget_set_sensitive (priv->button, TRUE);
+    }
+    else
+    {
+        gtk_widget_hide (priv->button);
+    }
 }
 
 static gchar*
@@ -198,7 +208,7 @@ gooroom_agent_signal_cb (GDBusProxy *proxy,
 
             if (0 < total)
                 g_timeout_add (500, (GSourceFunc) gooroom_notice_applet_immediately_job,(gpointer)user_data);
-			if (0 < priv->disabled_cnt)
+            if (0 < priv->disabled_cnt)
                 g_timeout_add (500, (GSourceFunc) gooroom_notice_applet_click_to_job,(gpointer)user_data);
         }
     }
@@ -431,6 +441,22 @@ on_notification_popup_cookie_cb (GObject *source_object, GAsyncResult *res, gpoi
 }
 #endif
 static gboolean
+on_notification_window_closed (GtkWidget *widget, GdkEvent *event, gpointer user_data)
+{
+    g_return_val_if_fail (user_data != NULL, TRUE);
+
+    GooroomNoticeApplet *applet = GOOROOM_NOTICE_APPLET (user_data);
+    GooroomNoticeAppletPrivate *priv = applet->priv;
+
+    gtk_window_get_position (GTK_WINDOW (widget), &priv->offset_x, &priv->offset_y);
+
+    gtk_widget_destroy (widget);
+    priv->window = NULL;
+
+    return TRUE;
+}
+
+static gboolean
 on_notification_popup_closed (GtkWidget *widget, gpointer user_data)
 {
     g_return_val_if_fail (user_data != NULL, TRUE);
@@ -440,6 +466,8 @@ on_notification_popup_closed (GtkWidget *widget, gpointer user_data)
 
     if (priv->window != NULL)
     {
+        gtk_window_get_position (GTK_WINDOW (priv->window), &priv->offset_x, &priv->offset_y);
+
         gtk_widget_destroy (priv->window);
         priv->window = NULL;
     }
@@ -448,9 +476,15 @@ on_notification_popup_closed (GtkWidget *widget, gpointer user_data)
 }
 
 static gboolean
-on_notification_popup_webview_closed (WebKitWebView* web_view, GtkWidget* window)
+on_notification_popup_webview_closed (WebKitWebView* web_view, gpointer user_data)
 {
-    gtk_widget_destroy (window);
+
+    GooroomNoticeApplet *applet = GOOROOM_NOTICE_APPLET (user_data);
+    GooroomNoticeAppletPrivate *priv = applet->priv;
+
+    gtk_window_get_position (GTK_WINDOW (priv->window), &priv->offset_x, &priv->offset_y);
+    gtk_widget_destroy (priv->window);
+
     return TRUE;
 }
 
@@ -531,8 +565,8 @@ gooroom_notice_popup (gchar *url, gpointer user_data)
     gtk_container_set_border_width (GTK_CONTAINER (window), 5);
     gtk_window_set_type_hint (GTK_WINDOW (window), GDK_WINDOW_TYPE_HINT_DIALOG);
     gtk_window_set_skip_taskbar_hint (GTK_WINDOW (window), TRUE);
-    gtk_window_set_position (GTK_WINDOW (window), GTK_WIN_POS_CENTER);
     gtk_window_set_title (GTK_WINDOW (window), _("Notice"));
+    gtk_window_set_default_size (GTK_WINDOW (window), 600, 550);
 
     GtkWidget *main_vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 5);
     gtk_container_add (GTK_CONTAINER (window), main_vbox);
@@ -546,8 +580,8 @@ gooroom_notice_popup (gchar *url, gpointer user_data)
     WebKitWebView *view = WEBKIT_WEB_VIEW (webkit_web_view_new());
     gtk_container_add (GTK_CONTAINER (scroll_window), GTK_WIDGET(view));
 
-    g_signal_connect (window, "destroy", G_CALLBACK (on_notification_popup_closed), user_data);
-    g_signal_connect (view, "close", G_CALLBACK (on_notification_popup_webview_closed), window);
+    g_signal_connect (window, "delete-event", G_CALLBACK (on_notification_window_closed), user_data);
+    g_signal_connect (view, "close", G_CALLBACK (on_notification_popup_webview_closed), user_data);
 
     webkit_web_view_load_uri (view, url);
 
@@ -574,9 +608,16 @@ gooroom_notice_popup (gchar *url, gpointer user_data)
     gtk_box_pack_end (GTK_BOX (hbox), button, FALSE, FALSE, 0);
     g_signal_connect (G_OBJECT (button), "clicked", G_CALLBACK (on_notification_popup_closed), user_data);
     gtk_widget_show (button);
-
-    gtk_window_set_default_size (GTK_WINDOW (window), 600, 550);
     gtk_widget_show_all (window);
+
+    if (priv->offset_x != 0 && priv->offset_y != 0)
+    {
+        gtk_window_move (GTK_WINDOW (window), priv->offset_x, priv->offset_y);
+    }
+    else
+    {
+        gtk_window_set_position (GTK_WINDOW (window), GTK_WIN_POS_CENTER);
+    }
 
     priv->window = window;
 
@@ -867,6 +908,8 @@ gooroom_notice_applet_init (GooroomNoticeApplet *applet)
     priv->default_domain = NULL;
     priv->disabled_cnt = 0;
     priv->agent_id = 0;
+    priv->offset_x = 0;
+    priv->offset_y = 0;
 
     priv->is_job = FALSE;
     priv->is_agent = FALSE;
@@ -894,7 +937,11 @@ gooroom_notice_applet_init (GooroomNoticeApplet *applet)
     GNetworkMonitor *monitor = g_network_monitor_get_default();
     g_signal_connect (monitor, "network-changed", G_CALLBACK (gooroom_notice_applet_network_changed), applet);
     priv->is_connected = g_network_monitor_get_network_available (monitor);
-    gtk_widget_set_sensitive (priv->button, (priv->is_connected && priv->is_agent));
+
+    if (!(priv->is_connected && priv->is_agent))
+    {
+        gtk_widget_hide (priv->button);
+    }
 
     if (priv->is_connected)
         g_timeout_add (500, (GSourceFunc) gooroom_applet_notice_update_delay, (gpointer)applet);
