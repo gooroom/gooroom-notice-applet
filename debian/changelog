@@ -1,3 +1,12 @@
+gooroom-notice-applet (0.2.3+grm2u1) unstable; urgency=medium
+
+  [ donghun ]
+  * [765fed4c] [Bug:2099] Apply window position setting and hide tray icon
+
+  [ Gooroom Autobuilder ]
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Tue, 07 Jul 2020 14:11:02 +0900
+
 gooroom-notice-applet (0.2.2+grm2u1) unstable; urgency=medium
 
   [ donghun ]
