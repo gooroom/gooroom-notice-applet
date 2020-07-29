@@ -928,8 +928,6 @@ gooroom_notice_applet_init (GooroomNoticeApplet *applet)
     gtk_image_set_pixel_size (GTK_IMAGE (priv->tray), PANEL_TRAY_ICON_SIZE);
     gtk_container_add (GTK_CONTAINER (priv->button), priv->tray);
 
-    gtk_widget_show_all (priv->button);
-
     log_handler = g_log_set_handler (NULL,
             G_LOG_LEVEL_MASK | G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION,
             gooroom_log_handler, NULL);
@@ -938,9 +936,9 @@ gooroom_notice_applet_init (GooroomNoticeApplet *applet)
     g_signal_connect (monitor, "network-changed", G_CALLBACK (gooroom_notice_applet_network_changed), applet);
     priv->is_connected = g_network_monitor_get_network_available (monitor);
 
-    if (!(priv->is_connected && priv->is_agent))
+    if (priv->is_connected && priv->is_agent)
     {
-        gtk_widget_hide (priv->button);
+        gtk_widget_show_all (priv->button);
     }
 
     if (priv->is_connected)
@@ -963,9 +961,13 @@ static gboolean
 gooroom_notice_applet_fill (GooroomNoticeApplet *applet)
 {
     g_return_val_if_fail (PANEL_IS_APPLET (applet), FALSE);
-
     GooroomNoticeAppletPrivate *priv = applet->priv;
     gtk_widget_show_all (GTK_WIDGET (applet));
+
+    if (!(priv->is_connected && priv->is_agent))
+    {
+        gtk_widget_hide (priv->button);
+    }
     return TRUE;
 }
 
