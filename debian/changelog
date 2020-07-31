@@ -1,3 +1,12 @@
+gooroom-notice-applet (0.2.4+grm2u1) unstable; urgency=medium
+
+  [ donghun ]
+  * [8fd9aa08] Fixed icon activation error
+
+  [ Gooroom Autobuilder ]
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Fri, 31 Jul 2020 11:13:21 +0900
+
 gooroom-notice-applet (0.2.3+grm2u1) unstable; urgency=medium
 
   [ donghun ]
