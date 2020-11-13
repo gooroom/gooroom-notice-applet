@@ -19,7 +19,7 @@
 #ifndef __GOOROOM_NOTICE_APPLET_H__
 #define __GOOROOM_NOTICE_APPLET_H__
 
-#include <panel-applet.h>
+#include <libgnome-panel/gp-applet.h>
 G_BEGIN_DECLS
 
 #define GOOROOM_TYPE_NOTICE_APPLET           (gooroom_notice_applet_get_type ())
@@ -34,12 +34,12 @@ typedef struct _GooroomNoticeAppletClass   GooroomNoticeAppletClass;
 typedef struct _GooroomNoticeAppletPrivate GooroomNoticeAppletPrivate;
 
 struct _GooroomNoticeApplet {
-	PanelApplet            parent;
-	GooroomNoticeAppletPrivate *priv;
+    GpApplet                    parent;
+    GooroomNoticeAppletPrivate *priv;
 };
 
 struct _GooroomNoticeAppletClass {
-	PanelAppletClass parent_class;
+    GpAppletClass parent_class;
 };
 
 GType gooroom_notice_applet_get_type (void);

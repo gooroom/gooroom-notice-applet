@@ -1,4 +1,4 @@
-gnomeappletdir = $(pkglibdir)
+gnomeappletdir = $(GNOME_PANEL_MODULES_DIR)
 gnomeapplet_LTLIBRARIES = libgooroom-notice-applet.la
 
 libgooroom_notice_applet_la_CPPFLAGS = \
@@ -18,12 +18,13 @@ libgooroom_notice_applet_la_SOURCES = \
 	$(BUILT_SOURCES)	\
 	gooroom-notice-applet.h	\
 	gooroom-notice-applet.c	\
+	gooroom-notice-module.c	
 	$(NULL)
 
 libgooroom_notice_applet_la_CFLAGS = \
 	$(GLIB_CFLAGS) \
 	$(GTK_CFLAGS) \
-	$(GNOME_APPLETS_CFLAGS) \
+	$(LIBGNOMEPANEL_CFLAGS) \
 	$(LIBNOTIFY_CFLAGS) \
 	$(DBUS_CFLAGS) \
 	$(DBUS_GLIB_CFLAGS) \
@@ -44,7 +45,7 @@ libgooroom_notice_applet_la_LIBADD = \
 	$(DBUS_GLIB_LIBS) \
 	$(LIBWEBKIT2GTK_LIBS) \
     $(JSON_C_LIBS)  \
-	$(GNOME_APPLETS_LIBS)
+	$(LIBGNOMEPANEL_LIBS)
 
 resource_files = $(shell glib-compile-resources --sourcedir=$(srcdir) --generate-dependencies $(srcdir)/gresource.xml)
 applet-resources.c: gresource.xml $(resource_files)

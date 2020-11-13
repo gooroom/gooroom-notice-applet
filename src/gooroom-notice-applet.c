@@ -28,7 +28,7 @@
 #include <glib/gi18n-lib.h>
 #include <gtk/gtk.h>
 
-#include <panel-applet.h>
+#include <libgnome-panel/gp-applet.h>
 
 #include <libnotify/notify.h>
 #include <webkit2/webkit2.h>
@@ -90,7 +90,7 @@ typedef struct
 }CookieData;
 
 static uint        log_handler = 0;
-G_DEFINE_TYPE_WITH_PRIVATE (GooroomNoticeApplet, gooroom_notice_applet, PANEL_TYPE_APPLET)
+G_DEFINE_TYPE_WITH_PRIVATE (GooroomNoticeApplet, gooroom_notice_applet, GP_TYPE_APPLET)
 
 void
 gooroom_log_handler(const gchar *log_domain,
@@ -434,12 +434,14 @@ on_notification_closed (NotifyNotification *notification, gpointer user_data)
         g_object_unref (notification);
     }
 }
+
 #if 1
 static void
 on_notification_popup_cookie_cb (GObject *source_object, GAsyncResult *res, gpointer user_data)
 {
 }
 #endif
+
 static gboolean
 on_notification_window_closed (GtkWidget *widget, GdkEvent *event, gpointer user_data)
 {
@@ -802,7 +804,7 @@ on_notice_applet_button_toggled (GtkToggleButton *button, gpointer user_data)
 
 static void
 gooroom_notice_applet_size_allocate (GtkWidget     *widget,
-                                          GtkAllocation *allocation)
+                                     GtkAllocation *allocation)
 {
     gint size;
     GtkAllocation alloc;
@@ -817,7 +819,7 @@ gooroom_notice_applet_size_allocate (GtkWidget     *widget,
 
     GTK_WIDGET_CLASS (gooroom_notice_applet_parent_class)->size_allocate (widget, allocation);
 
-    orientation = panel_applet_get_gtk_orientation (PANEL_APPLET (applet));
+    orientation = gp_applet_get_orientation (GP_APPLET (applet));
     gtk_widget_get_allocation (widget, &alloc);
 
     if (orientation == GTK_ORIENTATION_HORIZONTAL)
@@ -889,12 +891,36 @@ gooroom_notice_applet_finalize (GObject *object)
     G_OBJECT_CLASS (gooroom_notice_applet_parent_class)->finalize (object);
 }
 
+static gboolean
+gooroom_notice_applet_fill (GooroomNoticeApplet *applet)
+{
+    g_return_val_if_fail (GP_IS_APPLET (applet), FALSE);
+
+    GooroomNoticeAppletPrivate *priv = applet->priv;
+    gtk_widget_show_all (GTK_WIDGET (applet));
+
+    if (!(priv->is_connected && priv->is_agent))
+    {
+        gtk_widget_hide (priv->button);
+    }
+    return TRUE;
+}
+
+static void
+gooroom_notice_applet_constructed (GObject *object)
+{
+    GooroomNoticeApplet *applet = GOOROOM_NOTICE_APPLET (object);
+
+    gooroom_notice_applet_fill (applet);
+}
+
 static void
 gooroom_notice_applet_init (GooroomNoticeApplet *applet)
 {
     GooroomNoticeAppletPrivate *priv;
     priv = applet->priv = gooroom_notice_applet_get_instance_private (applet);
-    panel_applet_set_flags (PANEL_APPLET (applet), PANEL_APPLET_EXPAND_MINOR);
+
+    gp_applet_set_flags (GP_APPLET (applet), GP_APPLET_FLAGS_EXPAND_MINOR);
 
     priv->window     = NULL;
 
@@ -915,10 +941,6 @@ gooroom_notice_applet_init (GooroomNoticeApplet *applet)
     priv->is_agent = FALSE;
     priv->is_connected = FALSE;
     priv->img_status = FALSE;
-
-    /* Initialize i18n */
-    bindtextdomain (GETTEXT_PACKAGE, GNOMELOCALEDIR);
-    bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
 
     priv->button = gtk_toggle_button_new ();
     gtk_container_add (GTK_CONTAINER (applet), priv->button);
@@ -954,37 +976,6 @@ gooroom_notice_applet_class_init (GooroomNoticeAppletClass *class)
     object_class = G_OBJECT_CLASS (class);
     widget_class = GTK_WIDGET_CLASS (class);
     widget_class->size_allocate = gooroom_notice_applet_size_allocate;
+    object_class->constructed = gooroom_notice_applet_constructed;
     object_class->finalize = gooroom_notice_applet_finalize;
 }
-
-static gboolean
-gooroom_notice_applet_fill (GooroomNoticeApplet *applet)
-{
-    g_return_val_if_fail (PANEL_IS_APPLET (applet), FALSE);
-    GooroomNoticeAppletPrivate *priv = applet->priv;
-    gtk_widget_show_all (GTK_WIDGET (applet));
-
-    if (!(priv->is_connected && priv->is_agent))
-    {
-        gtk_widget_hide (priv->button);
-    }
-    return TRUE;
-}
-
-static gboolean
-gooroom_notice_applet_factory (PanelApplet *applet,
-                                    const gchar *iid,
-                                    gpointer     data)
-{
-    gboolean retval = FALSE;
-
-    if (!g_strcmp0 (iid, "GooroomNoticeApplet"))
-        retval = gooroom_notice_applet_fill (GOOROOM_NOTICE_APPLET (applet));
-
-    return retval;
-}
-
-PANEL_APPLET_IN_PROCESS_FACTORY ("GooroomNoticeAppletFactory",
-                                 GOOROOM_TYPE_NOTICE_APPLET,
-                                 (PanelAppletFactoryCallback)gooroom_notice_applet_factory,
-                                 NULL)
