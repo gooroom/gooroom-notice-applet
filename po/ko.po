@@ -15,11 +15,9 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../data/kr.gooroom.NoticeApplet.panel-applet.in.in.h:1
 msgid "Gooroom Notice Applet"
 msgstr "구름 공지사항 알림 애플릿"
 
-#: ../data/kr.gooroom.NoticeApplet.panel-applet.in.in.h:2
 msgid "Notice applet for GNOME panel"
 msgstr "GNOME 패널용 공지사항 알림 애플릿"
 

@@ -1,3 +1,2 @@
-[type: gettext/ini]data/kr.gooroom.NoticeApplet.panel-applet.in.in
 src/gooroom-notice-applet.c
 src/gooroom-notice-module.c
