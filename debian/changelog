@@ -1,3 +1,13 @@
+gooroom-notice-applet (0.2.5+grm2u1) unstable; urgency=medium
+
+  [ donghun ]
+  * [8fd9aa08] Fixed icon activation error
+
+  [ heejun.jang ]
+  * [b1ef8b64] Remove get data from json
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Thu, 19 May 2022 10:45:36 +0900
+
 gooroom-notice-applet (0.2.3+grm2u1) unstable; urgency=medium
 
   [ donghun ]
