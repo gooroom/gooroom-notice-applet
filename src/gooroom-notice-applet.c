@@ -327,7 +327,7 @@ gooroom_applet_notice_get_data_from_json (gpointer user_data, const gchar *data,
             g_queue_push_tail (priv->queue, n);
         }
     }
-    json_object_put (root_obj);
+//    json_object_put (root_obj);
 done:
     if (root_obj)
         json_object_put (root_obj);
