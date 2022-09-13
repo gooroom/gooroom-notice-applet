@@ -518,10 +518,16 @@ gooroom_notice_get_domain (gchar *url)
     g_autofree gchar *scheme = g_uri_parse_scheme (url);
     gint len = strlen (scheme) + 3;
     g_autofree gchar **url_token;
+    g_autofree gchar **port;
+
     url_token = g_strsplit (url + len, "/", -1);
 
     if (url_token)
         domain = url_token[0];
+
+	port = g_strsplit (domain, ":", -1);
+
+	domain = port[0];
 
     return domain;
 }
@@ -640,6 +646,7 @@ on_notification_popup_opened (NotifyNotification *notification, char *action, gp
 
     NoticeData *data;
     NotifyNotification *key;
+
     if (!g_hash_table_lookup_extended (priv->data_list, (gpointer)notification, (gpointer)&key, (gpointer)&data))
         return;
 
