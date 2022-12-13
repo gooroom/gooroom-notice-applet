@@ -478,6 +478,16 @@ on_notification_popup_closed (GtkWidget *widget, gpointer user_data)
 }
 
 static gboolean
+on_right_button_cb (WebKitWebView       *web_view,
+                    WebKitContextMenu   *context_menu,
+                    GdkEvent            *event,
+                    WebKitHitTestResult *hit_test_result,
+                    gpointer             user_data)
+{
+    webkit_context_menu_remove_all (context_menu);
+}
+
+static gboolean
 on_notification_popup_webview_closed (WebKitWebView* web_view, gpointer user_data)
 {
 
@@ -590,6 +600,7 @@ gooroom_notice_popup (gchar *url, gpointer user_data)
 
     g_signal_connect (window, "delete-event", G_CALLBACK (on_notification_window_closed), user_data);
     g_signal_connect (view, "close", G_CALLBACK (on_notification_popup_webview_closed), user_data);
+    g_signal_connect (view, "context-menu", G_CALLBACK (on_right_button_cb), user_data);
 
     webkit_web_view_load_uri (view, url);
 
