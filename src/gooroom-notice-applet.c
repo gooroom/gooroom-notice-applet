@@ -674,7 +674,7 @@ notification_opened (gpointer user_data, gchar *title, gchar *icon)
     notification = notify_notification_new (title, "", icon);
     notify_notification_add_action (notification, "default", _("detail view"), (NotifyActionCallback)on_notification_popup_opened, user_data, NULL);
     notify_notification_set_urgency (notification, NOTIFY_URGENCY_NORMAL);
-    notify_notification_set_timeout (notification, NOTIFICATION_TIMEOUT);
+    notify_notification_set_timeout (notification, NOTIFY_EXPIRES_NEVER);
     notify_notification_show (notification, NULL);
 
     return notification;
