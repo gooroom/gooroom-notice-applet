@@ -1,3 +1,12 @@
+gooroom-notice-applet (0.3.2+grm3u1) unstable; urgency=medium
+
+  [ boyeon.choi ]
+  * [2a443ab2] Modified to operate normally when the port number is present
+  * [118626cd] Deleted context-menu
+  * [2f76837e] notify expires never
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Fri, 03 Feb 2023 16:22:38 +0900
+
 gooroom-notice-applet (0.3.0+grm3u1) unstable; urgency=medium
 
   [ subin.kim ]
