@@ -443,6 +443,19 @@ on_notification_popup_cookie_cb (GObject *source_object, GAsyncResult *res, gpoi
 #endif
 
 static gboolean
+on_notification_window_event_cb (GtkWidget *widgte ,GdkEvent *event, gpointer user_data)
+{
+	GdkDisplay *display = gdk_display_get_default ();
+	GdkKeymap *keymap = gdk_keymap_get_for_display (display);
+	gint flag = gdk_keymap_get_modifier_mask (keymap, GDK_MODIFIER_INTENT_CONTEXT_MENU);
+
+	if (gdk_event_triggers_context_menu (event))
+		return GDK_EVENT_STOP;
+
+	return FALSE;
+}
+
+static gboolean
 on_notification_window_closed (GtkWidget *widget, GdkEvent *event, gpointer user_data)
 {
     g_return_val_if_fail (user_data != NULL, TRUE);
@@ -475,16 +488,6 @@ on_notification_popup_closed (GtkWidget *widget, gpointer user_data)
     }
 
     return TRUE;
-}
-
-static gboolean
-on_right_button_cb (WebKitWebView       *web_view,
-                    WebKitContextMenu   *context_menu,
-                    GdkEvent            *event,
-                    WebKitHitTestResult *hit_test_result,
-                    gpointer             user_data)
-{
-    webkit_context_menu_remove_all (context_menu);
 }
 
 static gboolean
@@ -583,7 +586,12 @@ gooroom_notice_popup (gchar *url, gpointer user_data)
     gtk_container_set_border_width (GTK_CONTAINER (window), 5);
     gtk_window_set_type_hint (GTK_WINDOW (window), GDK_WINDOW_TYPE_HINT_DIALOG);
     gtk_window_set_skip_taskbar_hint (GTK_WINDOW (window), TRUE);
-    gtk_window_set_title (GTK_WINDOW (window), _("Notice"));
+    //gtk_window_set_title (GTK_WINDOW (window), _("Notice"));
+	GtkWidget *headerbar = gtk_header_bar_new ();
+
+	gtk_header_bar_set_title (GTK_HEADER_BAR (headerbar),_("Notice"));
+	gtk_window_set_titlebar (GTK_WINDOW (window), GTK_WIDGET (headerbar));
+	gtk_header_bar_set_show_close_button (GTK_HEADER_BAR (headerbar), TRUE);
     gtk_window_set_default_size (GTK_WINDOW (window), 600, 550);
 
     GtkWidget *main_vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 5);
@@ -600,7 +608,8 @@ gooroom_notice_popup (gchar *url, gpointer user_data)
 
     g_signal_connect (window, "delete-event", G_CALLBACK (on_notification_window_closed), user_data);
     g_signal_connect (view, "close", G_CALLBACK (on_notification_popup_webview_closed), user_data);
-    g_signal_connect (view, "context-menu", G_CALLBACK (on_right_button_cb), user_data);
+    g_signal_connect (view, "event", G_CALLBACK (on_notification_window_event_cb), user_data);
+    g_signal_connect (window, "event", G_CALLBACK (on_notification_window_event_cb), user_data);
 
     webkit_web_view_load_uri (view, url);
 
@@ -670,6 +679,7 @@ notification_opened (gpointer user_data, gchar *title, gchar *icon)
     g_return_val_if_fail (user_data != NULL, NULL);
 
     NotifyNotification *notification;
+
     notify_init (PACKAGE_NAME);
     notification = notify_notification_new (title, "", icon);
     notify_notification_add_action (notification, "default", _("detail view"), (NotifyActionCallback)on_notification_popup_opened, user_data, NULL);
