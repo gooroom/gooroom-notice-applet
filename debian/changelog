@@ -1,3 +1,10 @@
+gooroom-notice-applet (0.3.3+grm3u1) unstable; urgency=medium
+
+  [ boyeon.choi ]
+  * [37ceda27] Deleted all context menu include the headerbar
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Sun, 21 May 2023 12:59:45 +0900
+
 gooroom-notice-applet (0.3.2+grm3u1) unstable; urgency=medium
 
   [ boyeon.choi ]
