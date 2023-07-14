@@ -727,16 +727,15 @@ gooroom_notice_applet_immediately_job (gpointer user_data)
     priv->is_job = TRUE;
 
     NoticeData *n;
-    while ((n = g_queue_pop_head (priv->queue)))
+    while ((n = g_queue_peek_nth(priv->queue,0)))
     {
         if (!n)
             continue;
 
         if (NOTIFICATION_LIMIT <= priv->total)
-        {
-            g_queue_push_tail (priv->queue, n);
             return priv->is_job;
-        }
+
+        g_queue_pop_head (priv->queue);
 
         priv->total++;
 
