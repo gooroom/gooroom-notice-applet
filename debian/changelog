@@ -1,3 +1,10 @@
+gooroom-notice-applet (0.3.4+grm3u1) unstable; urgency=medium
+
+  [ boyeon.choi ]
+  * [5baef2d6] Make the notification in order
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Fri, 28 Jul 2023 09:36:53 +0900
+
 gooroom-notice-applet (0.3.3+grm3u1) unstable; urgency=medium
 
   [ boyeon.choi ]
