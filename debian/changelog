@@ -1,3 +1,10 @@
+gooroom-notice-applet (4.0.0+grm4u1) unstable; urgency=medium
+
+  [ jongkyung.woo ]
+  * [31091383] Rebuild on gooroom-4.0
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Mon, 11 Mar 2024 19:25:53 +0900
+
 gooroom-notice-applet (0.3.4+grm3u1) unstable; urgency=medium
 
   [ boyeon.choi ]
